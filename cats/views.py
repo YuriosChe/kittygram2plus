@@ -3,11 +3,21 @@ from rest_framework import viewsets
 from .models import Achievement, Cat, User
 
 from .serializers import AchievementSerializer, CatSerializer, UserSerializer
+from .permissions import OwnerOrReadOnly, ReadOnly
 
 
 class CatViewSet(viewsets.ModelViewSet):
     queryset = Cat.objects.all()
     serializer_class = CatSerializer
+    permission_classes = (OwnerOrReadOnly,)
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return (ReadOnly(),)
+
+        return super().get_permissions()
+    
+
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user) 
@@ -16,6 +26,7 @@ class CatViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    
 
 
 class AchievementViewSet(viewsets.ModelViewSet):
