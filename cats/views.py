@@ -1,4 +1,11 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, filters
+from rest_framework.throttling import ScopedRateThrottle, AnonRateThrottle
+from rest_framework.pagination import PageNumberPagination,  LimitOffsetPagination
+
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .throttling import WorkingHoursRateThrottle
+from .pagination import CatsPagination
 
 from .models import Achievement, Cat, User
 
@@ -10,6 +17,26 @@ class CatViewSet(viewsets.ModelViewSet):
     queryset = Cat.objects.all()
     serializer_class = CatSerializer
     permission_classes = (OwnerOrReadOnly,)
+    # throttle_classes = (AnonRateThrottle,)
+    throttle_classes = (WorkingHoursRateThrottle, ScopedRateThrottle)
+
+    # filter_backends = (SearchFilter,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    # throttle_scope = 'low_request'
+    pagination_class = None
+    
+    filterset_fields = ('color', 'birth_year')
+    search_fields = ('name',)
+    ordering_fields = ('name', 'birth_year')
+    ordering = ('birth_year',)
+    
+    # def get_queryset(self):
+    #     queryset = Cat.objects.all()
+    #     # color = self.kwargs['color']
+    #     color = self.request.query_params.get('color')
+    #     if color is not None:
+    #         queryset = queryset.filter(color=color)
+    #     return queryset
 
     def get_permissions(self):
         if self.action == 'retrieve':
